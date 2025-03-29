@@ -10,6 +10,7 @@
 *.keystore
 *.keystore.password
 /keystore.properties
+/credential.properties
 libs/
 target/
 *.gpg

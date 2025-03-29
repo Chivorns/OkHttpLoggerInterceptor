@@ -21,4 +21,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "OkHttpLoggerInterceptor"
 include(":app")
- 
+include(":okhttp-logger-interceptor")

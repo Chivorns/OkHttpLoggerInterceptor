@@ -12,7 +12,6 @@ import okio.IOException
 import timber.log.Timber
 import java.util.Collections
 
-
 object LogUtil {
     private const val tagFrame = "===================="
     private const val titleFrame = "--------------------"
@@ -93,26 +92,38 @@ object LogUtil {
             val query: String? = httpUrl.query
             val url: String = request.url.encodedPath
             val requestBody: RequestBody? = request.body
-            val requestBuffer = Buffer()
-            requestBody?.writeTo(requestBuffer)
-            val requestBodyStr: String = requestBuffer.readUtf8()
             val responseCode: Int? = okhttpResponse?.code
             val responseBody: ResponseBody? = OkHttpUtil.getResponseBody(okhttpResponse)
-            val responseBodyString: String? = responseBody?.string()
+
+            // Read and parse RequestBody with Gson to avoid Unicode Escaping in String Logging
+            val requestBodyStr = requestBody?.let {
+                val buffer = Buffer()
+                it.writeTo(buffer)
+                val rawStr = buffer.readUtf8()
+                StringUtil.parseWithGson(rawStr)
+            } ?: ""
+
+            // Read and parse ResponseBody with Gson to avoid Unicode Escaping in String Logging
+            val responseBodyString = responseBody?.let {
+                val rawStr = it.string()
+                StringUtil.parseWithGson(rawStr)
+            } ?: ""
+
             logParam["Endpoint ($method)"] = httpUrl.toString()
             if (path != url) logParam["Url"] = url
             if (query != null) logParam["Url"] = "$url?$query"
             if (requestBodyStr.isNotEmpty()) logParam["Request"] = requestBodyStr
             if (responseCode != null) logParam["Response Code"] = responseCode.toString()
             logParam["Duration"] = "${tookMsTime}ms"
-            if (responseBodyString != null) logParam["Response"] = responseBodyString
+            if (responseBodyString.isNotEmpty()) logParam["Response"] = responseBodyString
             if (exception != null && exception !is IOException) logParam["Exception"] =
                 ErrorUtil.getStackTrace(exception)
 
+            val logMessage = getPrettyHeader(logHeader, logParam)
             if (responseCode != null && responseCode == 200) {
-                logTextInChunks(tagName, getPrettyHeader(logHeader, logParam), Log.DEBUG)
+                logTextInChunks(tagName, logMessage, Log.DEBUG)
             } else {
-                logTextInChunks(tagName, getPrettyHeader(logHeader, logParam), Log.ERROR)
+                logTextInChunks(tagName, logMessage, Log.ERROR)
             }
         } catch (e: Exception) {
             Timber.tag(tagName).e(e)

@@ -44,7 +44,7 @@ dependencies {
 
 ext {
     this["PUBLISH_GROUP_ID"] = "com.github.chivorns"
-    this["PUBLISH_VERSION"] = "1.4.2"
+    this["PUBLISH_VERSION"] = "2.0.0"
     this["PUBLISH_ARTIFACT_ID"] = "okhttp-logger-interceptor"
     this["PUBLISH_DESCRIPTION"] = "OkHttp Logger Interceptor"
     this["PUBLISH_URL"] = "https://github.com/Chivorns/okhttp-logger-interceptor"

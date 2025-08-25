@@ -2,6 +2,7 @@ package com.chivorn.okhttp.logger.interceptor.utils
 
 import android.os.Build
 import android.util.Log
+import com.chivorn.okhttp.logger.interceptor.OkHttpLoggerInterceptor
 import okhttp3.Request
 import okhttp3.Response
 import okio.Buffer
@@ -48,43 +49,64 @@ object LogUtil {
         request: Request,
         okhttpResponse: Response?,
         tookMsTime: Long,
-        exception: Exception?
+        exception: Exception?,
+        level: OkHttpLoggerInterceptor.Level
     ) {
         try {
             val logParam = LinkedHashMap<String, String>()
             val logHeader = "Request Details"
             val httpUrl = request.url
             val method = request.method
-            val path = httpUrl.toUrl().path
+            val path = httpUrl.encodedPath
             val query = httpUrl.query
-            val url = request.url.encodedPath
             val requestBody = request.body
             val responseCode = okhttpResponse?.code
             val responseBody = OkHttpUtil.getResponseBody(okhttpResponse)
 
+            // Step 1: Add headers first if level >= HEADERS
+            if (level >= OkHttpLoggerInterceptor.Level.HEADERS) {
+                request.headers.names().forEach { name ->
+                    logParam[name] = request.header(name) ?: ""
+                }
+            }
+
+            // Step 2: Add Endpoint and query info
+            logParam["Endpoint ($method)"] = httpUrl.toString()
+            if (!query.isNullOrEmpty()) {
+                logParam["Url"] = "${httpUrl.encodedPath}?$query"
+            } else if (path != httpUrl.encodedPath) {
+                logParam["Url"] = path
+            }
+
+            // Step 3: Add request body
             // Read and parse RequestBody with Gson to avoid Unicode Escaping in String Logging
             val requestBodyStr = requestBody?.let {
                 val buffer = Buffer()
                 it.writeTo(buffer)
                 StringUtil.parseWithGson(buffer.readUtf8())
             } ?: ""
-
-            // Read and parse ResponseBody with Gson to avoid Unicode Escaping in String Logging
-            val responseBodyString = responseBody?.let {
-                StringUtil.parseWithGson(it.string())
-            } ?: ""
-
-            logParam["Endpoint ($method)"] = httpUrl.toString()
-            if (path != url) logParam["Url"] = url
-            if (query != null) logParam["Url"] = "$url?$query"
             if (requestBodyStr.isNotEmpty()) logParam["Request"] = requestBodyStr
-            if (responseCode != null) logParam["Response Code"] = responseCode.toString()
+
+            // Step 4: Add response info
+            if (responseCode != null) {
+                logParam["Response Code"] = responseCode.toString()
+            }
             logParam["Duration"] = "${tookMsTime}ms"
-            if (responseBodyString.isNotEmpty()) logParam["Response"] = responseBodyString
+
+            // Step 5: Add response body if level >= HEADERS
+            // Read and parse ResponseBody with Gson to avoid Unicode Escaping in String Logging
+            if (level >= OkHttpLoggerInterceptor.Level.HEADERS) {
+                val responseBodyStr =
+                    responseBody?.let { StringUtil.parseWithGson(it.string()) } ?: ""
+                if (responseBodyStr.isNotEmpty()) logParam["Response"] = responseBodyStr
+            }
+
+            // Step 6: Add exception if any
             if (exception != null && exception !is IOException) {
                 logParam["Exception"] = exception.stackTraceToString()
             }
 
+            // Step 7: Print the full log
             val logMessage = getPrettyHeader(logHeader, logParam)
             val logLevel = if (responseCode == 200) Log.DEBUG else Log.ERROR
             logTextInChunks(tagName, logMessage, logLevel)

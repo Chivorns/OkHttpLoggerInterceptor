@@ -2,7 +2,6 @@ package com.chivorn.okhttp.logger.interceptor
 
 import com.chivorn.okhttp.logger.interceptor.utils.LogUtil
 import okhttp3.Interceptor
-import okhttp3.Request
 import okhttp3.Response
 import java.io.IOException
 import java.util.concurrent.TimeUnit
@@ -29,14 +28,12 @@ class OkHttpLoggerInterceptor : Interceptor {
     @Throws(IOException::class)
     override fun intercept(chain: Interceptor.Chain): Response {
         var exceptionToLog: Exception? = null
-        val builder: Request.Builder = chain.request().newBuilder()
-        val request = builder.build()
+        val request = chain.request()
         val level = this.level
+
         if (level == Level.NONE) {
             return chain.proceed(request)
         }
-
-        // Todo: Handle log format base on each log level
 
         var okhttpResponse: Response? = null
         val startNs = System.nanoTime()
@@ -53,7 +50,8 @@ class OkHttpLoggerInterceptor : Interceptor {
                 request = request,
                 okhttpResponse = okhttpResponse,
                 tookMsTime = tookMs,
-                exception = exceptionToLog
+                exception = exceptionToLog,
+                level = level
             )
         }
     }

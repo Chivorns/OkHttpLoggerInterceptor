@@ -1,17 +1,17 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.kotlin.compose)
+    //alias(libs.plugins.kotlin.compose)
 }
 
 android {
     namespace = "com.chivorn.okhttp.logger.interceptor"
-    compileSdk = 35
+    compileSdk = 33
 
     defaultConfig {
         applicationId = "com.chivorn.okhttp.logger.interceptor"
         minSdk = 21
-        targetSdk = 35
+        targetSdk = 33
         versionCode = 1
         versionName = "1.0"
 
@@ -36,6 +36,10 @@ android {
     }
     buildFeatures {
         compose = true
+    }
+
+    composeOptions {
+        kotlinCompilerExtensionVersion = "1.4.8"
     }
 }
 

@@ -3,7 +3,6 @@ package com.chivorn.okhttp.logger.interceptor
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
@@ -16,7 +15,6 @@ import com.chivorn.okhttp.logger.interceptor.ui.theme.OkHttpLoggerInterceptorThe
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
         setContent {
             OkHttpLoggerInterceptorTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
